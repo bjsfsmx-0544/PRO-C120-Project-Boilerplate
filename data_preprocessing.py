@@ -1,32 +1,32 @@
-# Text Data Preprocessing Lib
+# Bibliotecas de preprocesamiento de datos de texto
 import nltk
 nltk.download('punkt')
 nltk.download('wordnet')
 
-# to stem words
+# Para generar las palabras raíz
 from nltk.stem import PorterStemmer
 
-# create an instance of class PorterStemmer
+# Crear una instancia para la clase PorterStemmer
 stemmer = PorterStemmer()
 
-# importing json lib
+# Importando la biblioteca json
 import json
 import pickle
 import numpy as np
 
-words=[] #list of unique roots words in the data
-classes = [] #list of unique tags in the data
-pattern_word_tags_list = [] #list of the pair of (['words', 'of', 'the', 'sentence'], 'tags')
+words=[] # Lista de palabras raíz únicas en los datos
+classes = [] # Lista de etiquetas únicas en los datos
+pattern_word_tags_list = [] # Lista de pares de la forma: (['palabras', 'de', 'la', 'oración'], 'etiquetas')
 
-# words to be ignored while creating Dataset
+# Palabras a ignorar mientras se crea el conjunto de datos
 ignore_words = ['?', '!',',','.', "'s", "'m"]
 
-# open the JSON file, load data from it.
+# Abrir el archivo JSON y cargar datos desde él
 train_data_file = open('intents.json')
 data = json.load(train_data_file)
 train_data_file.close()
 
-# creating function to stem words
+# Creando una función para las palabras raíz
 def get_stem_words(words, ignore_words):
     stem_words = []
     for word in words:
@@ -38,7 +38,7 @@ def get_stem_words(words, ignore_words):
 
 
 '''
-List of sorted stem words for our dataset : 
+Lista ordenada de palabras raíz para nuestro conjunto de datos:
 
 ['all', 'ani', 'anyon', 'are', 'awesom', 'be', 'best', 'bluetooth', 'bye', 'camera', 'can', 'chat', 
 'cool', 'could', 'digit', 'do', 'for', 'game', 'goodby', 'have', 'headphon', 'hello', 'help', 'hey', 
@@ -49,61 +49,61 @@ List of sorted stem words for our dataset :
 '''
 
 
-# creating a function to make corpus
+# Creando una función para hacer el corpus
 def create_bot_corpus(words, classes, pattern_word_tags_list, ignore_words):
 
     for intent in data['intents']:
 
-        # Add all patterns and tags to a list
+        # Agregando todos los patrones y etiquetas a la lista
         for pattern in intent['patterns']:  
 
-            # tokenize the pattern          
+            # Tokenizar los patrones
             pattern_words = nltk.word_tokenize(pattern)
 
-            # add the tokenized words to the words list
+            # Agregar las palabras tokenizadas a la lista "words"
             words.extend(pattern_words)      
                           
-            # add the 'tokenized word list' along with the 'tag' to pattern_word_tags_list
+            # Agregar la lista de palabras tokenizadas junto con la etiqueta a to pattern_word_tags_list
             pattern_word_tags_list.append((pattern_words , intent['tag']))
             
             
-        # Add all tags to the classes list
+        # Agregar todas las etiquetas a la lista classes
         if intent['tag'] not in classes:
             classes.append(intent['tag'])
 
             
     stem_words = get_stem_words(words, ignore_words) 
 
-    # Remove duplicate words from stem_words
+    # Remover las palabras duplicadas de stem_words
     stem_words = set(stem_words)
 
-    # sort the stem_words list and classes list
+    # Ordenar las listas stem_words y classes
     stem_words = sorted(list(stem_words))
     classes = sorted(classes)
 
-    # print stem_words
-    print('stem_words list : ' , stem_words)
+    # Imprimir stem_words
+    print('Lista stem_words: ' , stem_words)
 
     return stem_words, classes, pattern_word_tags_list
 
 
-# Training Dataset: 
-# Input Text----> as Bag of Words 
-# Tags-----------> as Label
+# Conjunto de datos de entrenamiento: 
+# Texto de entrada ----> como una bolsa de palabras
+# Etiquetas -----------> como etiqueta
 
 def bag_of_words_encoding(stem_words, pattern_word_tags_list):
     
     bag = []
     for word_tags in pattern_word_tags_list:
-        # example: word_tags = (['hi', 'there'], 'greetings']
+        # Ejemplo: word_tags = (['hi', 'there'], 'greetings']
 
         pattern_words = word_tags[0] # ['Hi' , 'There]
         bag_of_words = []
 
-        # stemming pattern words before creating Bag of words
+        # Patrones de palabras raíz antes de crear la bolsa de palabras
         stemmed_pattern_word = get_stem_words(pattern_words, ignore_words)
 
-        # Input data encoding 
+        # Codificación de datos de entrada
         for word in stem_words:
             if word in stemmed_pattern_word:
                 bag_of_words.append(1)
@@ -120,16 +120,16 @@ def class_label_encoding(classes, pattern_word_tags_list):
 
     for word_tags in pattern_word_tags_list:
 
-        # Start with list of 0s 
+        # Comenzar con la lista de ceros
         labels_encoding = list([0]*len(classes))  
 
-        # example: word_tags = (['hi', 'there'], 'greetings']
+        # Ejemplo: word_tags = (['hi', 'there'], 'greetings']
 
         tag = word_tags[1]   # 'greetings'
 
         tag_index = classes.index(tag)
 
-        # Labels Encoding
+        # Codificación de etiquetas
         labels_encoding[tag_index] = 1
 
         labels.append(labels_encoding)
@@ -140,7 +140,7 @@ def preprocess_train_data():
   
     stem_words, tag_classes, word_tags_list = create_bot_corpus(words, classes, pattern_word_tags_list, ignore_words)
     
-    # Convert Stem words and Classes to Python pickel file format
+    # Convertir palabras raíz y clases al formato de archivo pickel de Python
     pickle.dump(stem_words, open('words.pkl','wb'))
     pickle.dump(tag_classes, open('classes.pkl','wb'))
 
@@ -151,8 +151,8 @@ def preprocess_train_data():
 
 bow_data  , label_data = preprocess_train_data()
 
-# after completing the code, remove comment from print statements
-print("first BOW encoding: " , bow_data[0])
-print("first Label encoding: " , label_data[0])
+# Después de completar el código, remover los comentarios de las declaraciones de impresión
+#print("Primera codificación de la bolsa de palabras: " , bow_data[0])
+#print("Primera codificación de las etiquetas: " , label_data[0])
 
 
